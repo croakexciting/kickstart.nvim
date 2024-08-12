@@ -14,11 +14,11 @@ function parse_cmdline_arguments() {
     local opt="$1"
     shift
     case "${opt}" in
-        -f | --font)
+        --font)
 	install_font
         exit
         ;;
-        -h | --help)
+       -h | --help)
         show_usage
         exit
         ;;
@@ -49,10 +49,8 @@ function main() {
 	parse_cmdline_arguments "$@"
 
 	echo "===== Ubuntu install ==="
-	if [ ! -f /usr/bin/tmux ] || [ ! -f /usr/bin/wget ]; then
-		sudo apt update
-		sudo apt install -y tmux wget
-	fi
+	sudo apt update
+	sudo apt install -y tmux wget gcc g++ clang curl
 
 	echo "===== Install Lazy Git ="
 	if [ ! -f /usr/local/bin/lazygit ]; then
@@ -66,7 +64,7 @@ function main() {
 	echo "===== Install nvim ====="
 	if [ ! -f /usr/bin/nvim ]; then
 		wget https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz -O nvim.tar.gz
-		sudo tar xzf nvim.tar.gz -C /usr
+		sudo tar xzf nvim.tar.gz --strip-components=1 -C /usr
 		rm nvim.tar.gz
 	fi
 
@@ -75,8 +73,10 @@ function main() {
 	git clone --depth=1 https://github.com/croakexciting/kickstart.nvim.git "${XDG_CONFIG_HOME:-$HOME/.config}"/nvim
 
 	echo "===== Tmux setup ======="
+	rm -rf "${XDG_CONFIG_HOME:-$HOME}"/.tmux/plugins/tpm
+	git clone --depth=1 https://github.com/tmux-plugins/tpm "${XDG_CONFIG_HOME:-$HOME}"/.tmux/plugins/tpm
 	rm -f "${XDG_CONFIG_HOME:-$HOME}/.tmux.conf"
-	cat << 'EOF' >> "${XDG_CONFIG_HOME:-$HOME}/.tmux.conf"
+	cat <<EOF >> "${XDG_CONFIG_HOME:-$HOME}/.tmux.conf"
 unbind r
 bind r source-file ~/.tmux.conf
 
@@ -106,10 +106,8 @@ set -g default-terminal "screen-256color"
 run '~/.tmux/plugins/tpm/tpm'
 EOF
 
-	echo "===== Install a nerd font ====="
-
-
 	echo "Done! Don't forget select nerd font before use it"
 }
 
 main "$@"
+
